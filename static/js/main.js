@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: document.body,
         refreshBtn: document.getElementById('refresh-btn'),
         refreshSpinner: document.getElementById('refresh-spinner'),
+        exportCsvBtn: document.getElementById('export-csv-btn'),
         lastSyncTime: document.getElementById('last-sync-time'),
         themeToggle: document.getElementById('theme-toggle'),
         themeDarkIcon: document.querySelector('.theme-dark-icon'),
@@ -207,7 +208,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span>Draft Tweet</span>
                         </div>
                         <div class="card-actions">
-                            <button class="btn btn-card copy-card-btn" title="Copy release notes content text">Copy Text</button>
+                            <button class="btn btn-card copy-card-btn" title="Copy release notes content to clipboard">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-2 4h.01M9 16h.01"></path>
+                                </svg>
+                                <span>Copy</span>
+                            </button>
                             <a href="${item.link}" target="_blank" class="btn btn-card" title="View official Google release notes documentation">
                                 <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px;">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
@@ -517,6 +523,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Deselect composer click
     elements.deselectBtn.addEventListener('click', deselectItem);
+
+    // Export current filtered updates to CSV
+    function exportToCSV() {
+        if (state.filteredUpdates.length === 0) {
+            showToast('No updates to export.');
+            return;
+        }
+
+        // CSV content start with UTF-8 BOM to prevent spreadsheet software encoding issues
+        let csvContent = 'Date,Type,Link,Content\n';
+
+        state.filteredUpdates.forEach(item => {
+            // Helper to escape values and wrap in double quotes
+            const date = `"${item.date.replace(/"/g, '""')}"`;
+            const type = `"${item.type.replace(/"/g, '""')}"`;
+            const link = `"${item.link.replace(/"/g, '""')}"`;
+            const content = `"${item.content_text.replace(/"/g, '""')}"`;
+
+            csvContent += `${date},${type},${link},${content}\n`;
+        });
+
+        const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        // Filename: bigquery_releases_YYYY-MM-DD.csv
+        const dateStr = new Date().toISOString().split('T')[0];
+        link.setAttribute('href', url);
+        link.setAttribute('download', `bigquery_releases_${dateStr}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('CSV export downloaded successfully!');
+    }
+
+    // CSV button click listener
+    if (elements.exportCsvBtn) {
+        elements.exportCsvBtn.addEventListener('click', exportToCSV);
+    }
 
 
     // --- Startup ---
