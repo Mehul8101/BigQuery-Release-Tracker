@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Pulse</title>
+    <meta name="description" content="Track, filter, and share the latest Google Cloud BigQuery release notes and updates.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%231e293b%22/><circle cx=%2250%22 cy=%2250%22 r=%2230%22 fill=%22none%22 stroke=%22%233b82f6%22 stroke-width=%228%22/><circle cx=%2250%22 cy=%2230%22 r=%228%22 fill=%22%2306b6d4%22/><circle cx=%2267%22 cy=%2260%22 r=%228%22 fill=%22%2310b981%22/><circle cx=%2233%22 cy=%2260%22 r=%228%22 fill=%22%23ef4444%22/></svg>">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Sidebar Navigation (Responsive branding) -->
+        <header class="app-header">
+            <div class="header-logo">
+                <div class="logo-icon">
+                    <!-- Custom SVG Logo representing BigQuery / Analytics Node -->
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="url(#logo-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 6V12L16 14" stroke="#00d2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="12" cy="12" r="3" fill="#3b82f6"/>
+                        <circle cx="16" cy="14" r="2" fill="#10b981"/>
+                        <circle cx="12" cy="6" r="2" fill="#ef4444"/>
+                        <defs>
+                            <linearGradient id="logo-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#3b82f6" />
+                                <stop offset="1" stop-color="#06b6d4" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>BigQuery <span>Release Pulse</span></h1>
+                    <p class="logo-sub">Google Cloud Feed Hub</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="sync-status">
+                    <span class="status-indicator online"></span>
+                    <span id="last-sync-time">Syncing...</span>
+                </div>
+                <button id="refresh-btn" class="btn btn-primary" title="Refresh feed from Google Cloud">
+                    <svg class="icon btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.248 8H17.5M11.5 21v-5h-.582m-15.356-2A8.001 8.001 0 112.752 16H6.5"></path>
+                    </svg>
+                    <span class="spinner" id="refresh-spinner"></span>
+                    <span class="btn-text">Refresh</span>
+                </button>
+                <button id="theme-toggle" class="btn btn-secondary btn-icon-only" title="Toggle Theme">
+                    <svg class="icon theme-dark-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                    <svg class="icon theme-light-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m2.828-9.9a5 5 0 117.072 0l-2.828 2.829a5 5 0 01-7.072 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Search and Filter Section -->
+        <section class="filter-bar">
+            <div class="search-box">
+                <svg class="icon search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" id="search-input" placeholder="Search release notes by keywords (e.g. Gemini, external tables)..." autocomplete="off">
+                <button id="search-clear" class="search-clear-btn" style="display: none;">&times;</button>
+            </div>
+            
+            <div class="filter-tags">
+                <button class="filter-chip active" data-type="all">All Updates</button>
+                <button class="filter-chip" data-type="Feature"><span class="chip-dot dot-feature"></span>Features</button>
+                <button class="filter-chip" data-type="Changed"><span class="chip-dot dot-changed"></span>Changes</button>
+                <button class="filter-chip" data-type="Issue"><span class="chip-dot dot-issue"></span>Issues</button>
+                <button class="filter-chip" data-type="Announcement"><span class="chip-dot dot-announcement"></span>Announcements</button>
+                <button class="filter-chip" data-type="Deprecated"><span class="chip-dot dot-deprecated"></span>Deprecations</button>
+            </div>
+        </section>
+
+        <!-- Main Content Dashboard Grid -->
+        <main class="dashboard-grid">
+            <!-- Left Panel: Feed Column -->
+            <section class="feed-column">
+                <div class="feed-header">
+                    <h2 class="section-title">Timeline Stream</h2>
+                    <span class="count-badge" id="visible-count">0 Updates</span>
+                </div>
+                
+                <!-- Toast notifications for actions -->
+                <div id="toast-notification" class="toast" role="alert">
+                    <span id="toast-message">Message copied!</span>
+                </div>
+
+                <!-- Feed Loader Skeleton -->
+                <div id="feed-skeleton" class="skeleton-container">
+                    <div class="skeleton-date-header"></div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-badge"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-text"></div>
+                        <div class="skeleton-text short"></div>
+                        <div class="skeleton-actions"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-badge"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-text"></div>
+                        <div class="skeleton-actions"></div>
+                    </div>
+                </div>
+
+                <!-- Feed Container -->
+                <div id="feed-container" style="display: none;">
+                    <!-- Appended dynamically -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <div class="empty-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-2.828 2.829a5 5 0 01-7.072 0z"></path>
+                        </svg>
+                    </div>
+                    <h3>No Release Notes Found</h3>
+                    <p>Try refining your search terms or filter tags, or click refresh to fetch the latest details.</p>
+                </div>
+            </section>
+
+            <!-- Right Panel: Sticky Tweet Composer -->
+            <aside class="composer-column">
+                <div class="sticky-panel">
+                    <div class="panel-header">
+                        <h2 class="section-title">Tweet Composer</h2>
+                        <span class="pulse-tag" id="composer-status-badge" style="display: none;">Active</span>
+                    </div>
+
+                    <!-- Composer Empty State -->
+                    <div id="composer-empty-state" class="composer-empty">
+                        <div class="empty-composer-icon">
+                            <!-- X/Twitter logo representation -->
+                            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                        </div>
+                        <h3>Share BigQuery Updates</h3>
+                        <p>Click on any release card, or click <strong>Draft Tweet</strong>, to auto-generate a professional update and customize it before posting.</p>
+                    </div>
+
+                    <!-- Composer Form Panel -->
+                    <div id="composer-form-panel" class="composer-card" style="display: none;">
+                        <div class="composer-meta">
+                            <span id="composer-item-type" class="badge">Feature</span>
+                            <span id="composer-item-date" class="composer-date">June 17, 2026</span>
+                        </div>
+                        
+                        <div class="textarea-container">
+                            <label for="tweet-textarea" class="sr-only">Tweet content</label>
+                            <textarea id="tweet-textarea" rows="8" placeholder="Draft your tweet here..."></textarea>
+                        </div>
+                        
+                        <div class="composer-actions">
+                            <div class="character-progress">
+                                <svg class="progress-ring" width="36" height="36">
+                                    <circle class="progress-ring-bg" stroke="#f1f5f9" stroke-width="3" fill="transparent" r="14" cx="18" cy="18" />
+                                    <circle class="progress-ring-circle" stroke="#3b82f6" stroke-width="3" fill="transparent" r="14" cx="18" cy="18" />
+                                </svg>
+                                <span id="char-counter" class="char-count">280</span>
+                            </div>
+                            
+                            <div class="quick-hashtag-pool">
+                                <span class="pool-title">Quick tags:</span>
+                                <div class="hashtags-list">
+                                    <button class="hashtag-chip" data-tag="#BigQuery">#BigQuery</button>
+                                    <button class="hashtag-chip" data-tag="#GoogleCloud">#GoogleCloud</button>
+                                    <button class="hashtag-chip" data-tag="#GCP">#GCP</button>
+                                    <button class="hashtag-chip" data-tag="#DataAnalytics">#DataAnalytics</button>
+                                    <button class="hashtag-chip" data-tag="#GenerativeAI">#GenerativeAI</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="char-limit-warning" class="error-msg-box" style="display: none;">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span>Character limit exceeded (Max 280 characters for standard accounts).</span>
+                        </div>
+
+                        <div class="action-buttons-group">
+                            <button id="tweet-intent-btn" class="btn btn-x-twitter">
+                                <svg class="icon btn-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                </svg>
+                                <span>Tweet this update</span>
+                            </button>
+                            
+                            <button id="copy-tweet-btn" class="btn btn-secondary" title="Copy tweet content to clipboard">
+                                <svg class="icon btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                                </svg>
+                                <span>Copy Text</span>
+                            </button>
+                        </div>
+                        
+                        <button id="deselect-composer-btn" class="btn-text-link">Deselect current update</button>
+                    </div>
+                </div>
+            </aside>
+        </main>
+        
+        <footer class="app-footer-bar">
+            <p>BigQuery Release Pulse &bull; Created with Flask &bull; Powered by Google Cloud RSS Feed</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
