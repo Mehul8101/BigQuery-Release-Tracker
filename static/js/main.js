@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tweetIntentBtn: document.getElementById('tweet-intent-btn'),
         copyTweetBtn: document.getElementById('copy-tweet-btn'),
         deselectBtn: document.getElementById('deselect-composer-btn'),
+        composerBackdrop: document.getElementById('composer-backdrop'),
+        mobileCloseBtn: document.getElementById('mobile-close-btn'),
         hashtagChips: document.querySelectorAll('.hashtag-chip'),
         
         // Toast Notification
@@ -152,6 +154,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Highlight matching query text inside HTML content (ignoring tags)
+    function highlightText(html, query) {
+        if (!query) return html;
+        const escapedQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`(<[^>]+>)|(${escapedQuery})`, 'gi');
+        return html.replace(regex, (match, p1, p2) => {
+            if (p1) return p1; // Return HTML tag untouched
+            return `<mark>${p2}</mark>`;
+        });
+    }
+
     // Group items by date and inject HTML
     function renderFeed() {
         elements.feedContainer.innerHTML = '';
@@ -196,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="card-date">${item.date}</span>
                     </div>
                     <div class="card-content">
-                        ${item.content_html}
+                        ${highlightText(item.content_html, state.searchQuery)}
                     </div>
                     <div class="card-footer">
                         <div class="select-wrapper">
@@ -289,8 +302,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCharCounter();
         updateHashtagChipsState();
         
-        // Smooth scroll to composer on smaller screens
-        if (window.innerWidth <= 960) {
+        document.body.classList.add('composer-open');
+
+        // Smooth scroll to composer on desktop or active view
+        if (window.innerWidth > 960) {
             elements.composerFormPanel.scrollIntoView({ behavior: 'smooth' });
         }
     }
@@ -307,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.composerEmptyState.style.display = 'flex';
         elements.composerFormPanel.style.display = 'none';
         elements.composerStatusBadge.style.display = 'none';
+        document.body.classList.remove('composer-open');
     }
 
     // Auto-generate standard tweet layout within 280 characters
@@ -563,6 +579,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // CSV button click listener
     if (elements.exportCsvBtn) {
         elements.exportCsvBtn.addEventListener('click', exportToCSV);
+    }
+
+    // Close mobile composer on backdrop click
+    if (elements.composerBackdrop) {
+        elements.composerBackdrop.addEventListener('click', deselectItem);
+    }
+
+    // Close mobile composer on close button click
+    if (elements.mobileCloseBtn) {
+        elements.mobileCloseBtn.addEventListener('click', deselectItem);
     }
 
 

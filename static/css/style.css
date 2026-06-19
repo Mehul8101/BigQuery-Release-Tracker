@@ -1183,10 +1183,93 @@ body:not(.dark-theme) .toast {
     border: 0;
 }
 
+/* Search Highlight Styling */
+mark {
+    background-color: rgba(245, 158, 11, 0.22);
+    color: var(--color-changed);
+    padding: 1px 3px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+body.dark-theme mark {
+    background-color: rgba(251, 191, 36, 0.22);
+    color: #fbbf24;
+}
+
+/* Backdrop Overlay */
+.composer-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+body.composer-open .composer-backdrop {
+    display: block;
+    opacity: 1;
+}
+
+/* Mobile Close Button Style */
+.mobile-close-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0 4px;
+    margin-left: 10px;
+    transition: color 0.15s;
+}
+
+.mobile-close-btn:hover {
+    color: var(--text-primary);
+}
+
+.panel-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* Responsive Breakdown */
 @media (max-width: 960px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .composer-column {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--bg-sticky);
+        border-top: 1px solid var(--border-color);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 20px 20px 32px;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+    
+    body.composer-open .composer-column {
+        transform: translateY(0);
+    }
+    
+    .mobile-close-btn {
+        display: block;
     }
     
     .sticky-panel {

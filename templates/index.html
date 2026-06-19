@@ -142,7 +142,10 @@
                 <div class="sticky-panel">
                     <div class="panel-header">
                         <h2 class="section-title">Tweet Composer</h2>
-                        <span class="pulse-tag" id="composer-status-badge" style="display: none;">Active</span>
+                        <div class="panel-header-controls">
+                            <span class="pulse-tag" id="composer-status-badge" style="display: none;">Active</span>
+                            <button id="mobile-close-btn" class="mobile-close-btn" title="Close Tweet Composer">&times;</button>
+                        </div>
                     </div>
 
                     <!-- Composer Empty State -->
@@ -224,6 +227,7 @@
         </footer>
     </div>
     
+    <div id="composer-backdrop" class="composer-backdrop"></div>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
